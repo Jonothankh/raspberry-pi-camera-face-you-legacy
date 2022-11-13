@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta name="charset" value="utf-8">
+        <title>PanTilt</title>
+        <style type="text/css">
+
+            @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+            .body {
+                font-family: 'Atkinson Hyperlegible', sans-serif;
+            }
+            .main {
+                font-family: 'Atkinson Hyperlegible', sans-serif;
+                width:160px;
+                height:160px;
+                background:#F0F0F0;
+                position:relative;
+                border-radius: 20px;
+                padding: 10px;
+
+                display: inline-block;
+            }
+            .controls {
+                font-family: 'Atkinson Hyperlegible', sans-serif;
+                width:160px;
+                height:160px;
+                background:#F0F0F0;
+                border-radius: 20px;
+                padding: 10px;
+
+                display: inline-block;
+                vertical-align:top
+            }
+            #cameraHolder {
+                display: inline;
+            }
+            .p5Canvas {
+                border-radius: 20px;
+                display: inline;
+            }
+            p {
+                font-family: 'Atkinson Hyperlegible', sans-serif;
+            }
+            .control-label {
+                display:inline;
+            }
+            .main ul, .main li {
+                list-style:none;
+                margin:0;
+                padding:0;
+            }
+            .main li {
+                width:60px;
+                height:60px;
+                background:#ff96f1;
+                border-radius: 50%;
+                position:absolute;
+                cursor:pointer;
+                line-height:60px;
+                text-align:center;
+                box-shadow: 0 20px 47px -14px rgba(77,18,77,0.7);
+                transition: 0.3s;
+            }
+
+            .main li:hover {
+                box-shadow: 0 5px 20px -14px rgba(77,18,77,1);
+            }
+
+            .main li:active {
+                background:#ee58da;
+            }
+
+            .main .up {left:50%;margin-left:-30px;}
+            .main .down {left:50%;bottom:10px;margin-left:-30px;}
+            .main .left {top:50%;margin-top:-30px;}
+            .main .right {top:50%;right:010px;margin-top:-30px;}
+
+            /* The switch - the box around the slider */
+            .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            }
+
+            /* Hide default HTML checkbox */
+            .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            }
+
+            /* The slider */
+            .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            }
+
+            .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            }
+
+            input:checked + .slider {
+            background-color: #2196F3;
+            }
+
+            input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+            }
+
+            input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+            }
+
+            /* Rounded sliders */
+            .slider.round {
+            border-radius: 34px;
+            }
+
+            .slider.round:before {
+            border-radius: 50%;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <div id="cameraHolder">
+
+        </div>
+
+        <div class="main">
+            <ul>
+                <li class="up" data-action="tilt:+1">▲</li>
+                <li class="down" data-action="tilt:-1">▼</li>
+                <li class="left" data-action="pan:+1">◀</li>
+                <li class="right" data-action="pan:-1">▶</li>
+            </ul>
+        </div>
+
+        <div class="controls">
+            <p class="control-label">Auto Pan:</p>
+            <label class="switch">
+                <input type="checkbox" id="autoCheckbox">
+                <span class="slider round"></span>
+            </label>
+
+            <p class="control-label">Light:</p>
+            <label class="switch">
+                <input type="checkbox" id="lightCheckbox">
+                <span class="slider round"></span>
+            </label>
+
+        </div>
+
+        <script
+            src="https://code.jquery.com/jquery-3.1.1.min.js"
+            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+            crossorigin="anonymous">
+        </script>
+
+        <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+
+        <script type="text/javascript">
+            // pan tilt params
+            var current_pan = 90;
+            var current_tilt = 90;
+            var pantilt_speed = 60; // Delay between increments in ms
+
+            var interval = null;
+            var current_direction = null;
+            var current_angle = null;
+
+            let modelIsReady = false;
+
+
+            // video features
+
+            let cameraCanvas;
+            let video;
+            let poseVideo;
+            let poseNet;
+
+            let autoMoveOn = false;
+            distanceFromCentreToMoveX = 0.2;
+            distanceFromCentreToMoveY = 0.2;
+
+            noseX = .5;
+            noseY = .5;
+
+            // light
+
+            let lightR, lightG, lightB = 0;
+
+
+            // video script
+
+            $('.main').on('mousedown','li',function(e){
+            })
+
+            $('#autoCheckbox').removeAttr('checked');
+            $('#lightCheckbox').removeAttr('checked');
+
+            $('#autoCheckbox').on('change', function() {
+                if ($(this).is(':checked')) {
+                    console.log($(this).val() + ' is now checked');
+                    poseNet = ml5.poseNet(video, poseOptions, modelReady);
+                    poseNet.on('pose', gotPoses)
+                    autoMoveOn = true;
+
+                } else {
+                    console.log($(this).val() + ' is now unchecked');
+                    poseNet.removeListener('pose', gotPoses);
+                    autoMoveOn = false;
+                    modelIsReady = false;
+                }
+            });
+
+            let poseOptions = {
+                archtecture: 'MobileNetV1',
+                maxPoseDetections: 1,
+                detectionType: 'single',
+                inputResolution: 161,
+
+                flipHorizontal: false
+            }
+
+            function setup() {
+                cameraCanvas = createCanvas(320, 180);
+                cameraCanvas.parent("cameraHolder");
+                video = createCapture(VIDEO);
+                video.hide();
+
+                poseVideo = video;
+
+                // poseNet = ml5.poseNet(poseVideo, poseOptions, modelReady);
+                // poseNet.on('pose', gotPoses);
+            }
+
+            function gotPoses(poses) {
+                if (poses.length > 0) {
+                    noseX = poses[0].pose.keypoints[0].position.x / video.width;
+                    noseY = poses[0].pose.keypoints[0].position.y / video.height;
+                }
+            }
+
+            function modelReady() {
+                modelIsReady = true;
+            }
+
+            function draw() {
+                
+                //move image by the width of image to the left
+                translate(width, 0);
+                //then scale it by -1 in the x-axis
+                //to flip the image
+                scale(-1, 1);
+                //draw video capture feed as image inside p5 canvas
+                image(video, 0, 0, 320, 180);
+
+                if (autoMoveOn) {
+                    fill(0, 0, 0, 0);
+                    stroke(color(255, 255, 255));
+                    ellipse(noseX * width, noseY * height, 100);
+                }
+                
+            }
+
+            function waitforme() {
+                return new Promise (resolve => {setTimeout(resolve, pantilt_speed); });
+            }
+            
+
+            function autoMove() {
+                if (autoMoveOn) {
+                    if (noseX > (0.5 + distanceFromCentreToMoveX)) {
+                        current_direction = 'pan';
+                        current_angle = -1;
+                        pantilt()
+                    }
+                    if (noseX < (0.5 - distanceFromCentreToMoveX)) {
+                        current_direction = 'pan';
+                        current_angle = 1;
+                        pantilt()
+                    }
+
+                    if (noseY > (0.5 + distanceFromCentreToMoveY)) {
+                        current_direction = 'tilt';
+                        current_angle = 1;
+                        pantilt()
+                    }
+                    if (noseY < (0.5 - distanceFromCentreToMoveY)) {
+                        current_direction = 'tilt';
+                        current_angle = -1;
+                        pantilt()
+                    }
+                }
+                
+            
+            }
+
+            async function autoMoveTrigger() {
+                while (true) {
+                    await waitforme();
+                    autoMove();
+                }
+            }
+
+            autoMoveTrigger()
+
+            // pan tilt script + buttons
+
+            $(function(){
+                $(window).on('keydown',function(e){
+                    clearInterval(interval);
+
+                    switch(e.keyCode){
+                        case 38: // Arrow Up
+                            current_direction = 'tilt';
+                            current_angle = 1;
+                            interval = setInterval(pantilt,pantilt_speed);
+                            break;
+                        case 40: // Arrow Down
+                            current_direction = 'tilt';
+                            current_angle = -1;
+                            interval = setInterval(pantilt,pantilt_speed);
+                            break;
+                        case 37: // Arrow Left
+                            current_direction = 'pan';
+                            current_angle = 1;
+                            interval = setInterval(pantilt,pantilt_speed);
+                            break;
+                        case 39: // Arrow Right
+                            current_direction = 'pan';
+                            current_angle = -1;
+                            interval = setInterval(pantilt,pantilt_speed);
+                            break;
+                    }
+                });
+
+                $(window).on('keyup',function(e){clearInterval(interval)});
+
+                $('.main').on('mousedown','li',function(e){
+                   e.preventDefault();
+                   clearInterval(interval);
+
+                   var obj = $(this);
+                   var action = obj.data('action');
+                   current_direction = action.split(':')[0];
+                   current_angle = parseInt(action.split(':')[1]);
+
+                   interval = setInterval(pantilt,pantilt_speed);
+                })
+
+                .on('mouseup','li',function(e){
+                    clearInterval(interval);
+                });
+
+            });
+
+            function pantilt(){
+                var angle = 0;
+
+                if(current_direction == 'pan'){
+                    current_pan += current_angle;
+                    if(current_pan < 0) current_pan = 0;
+                    if(current_pan > 180) current_pan = 180;
+                    angle = current_pan;
+                }
+
+                if(current_direction == 'tilt'){
+                    current_tilt += current_angle;
+                    if(current_tilt < 0) current_tilt = 0;
+                    if(current_tilt > 180) current_tilt = 180;
+                    angle = current_tilt;
+                }
+
+                $.get('/api/' + current_direction + '/' + angle); 
+            }
+
+            $.get('/light/off/20/20/20');
+        </script>
+
+
+    </body>
+</html>
